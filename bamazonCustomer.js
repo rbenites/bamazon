@@ -1,4 +1,6 @@
-/*Then create a Node application called `bamazonCustomer.js`. Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.
+/* jshint esversion: 6 */
+
+/*Create a Node application called `bamazonCustomer.js`. Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.
 
 6. The app should then prompt users with two messages.
 
@@ -13,9 +15,13 @@
    * This means updating the SQL database to reflect the remaining quantity.
    * Once the update goes through, show the customer the total cost of their purchase.
 */
+/*=+=NPM Required===*/
 var mysql = require("mysql");
+var inquirer = require('inquirer');
 
-var connection = mysql.createConnection({ debug: ['ComQueryPacket', 'RowDataPacket'] });
+/*===Global Variables===*/
+var lineBreak = "\n-------------------------";
+var productArr = [];
 
 var connection = mysql.createConnection({
   host: "localhost",
@@ -25,20 +31,117 @@ var connection = mysql.createConnection({
   user: "root",
 
   // Your password
-  password: "",
+  password: "Rocky115@",
   database: "bamazon_db",
 });
 
+//function to show error if connection is not establish else log the connection ID and call next function to start program
 connection.connect(function (err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId);
-  afterConnection();
+  loadArray();
+  whatToDo();
 });
 
-function afterConnection() {
+function whatToDo() {
+  inquirer
+    .prompt({
+      name: "action",
+      type: "list",
+      message: "What would you like to do?",
+      choices: [
+        "See a List of Products",
+        "Place an Order",
+        "Quit"]
+    })
+    .then(function (answer) {
+      switch (answer.action) {
+        case "See a List of Products":
+          displayInventory();
+          break;
+
+        case "Place an Order":
+          enterOrder();
+          break;
+
+        case "Quit":
+          console.log("Thank you for shopping at Rick's House of Wonder. Stay Shwifty!");
+          endConnection();
+          break;
+      }
+    });
+}
+
+//function to display inventory
+function displayInventory() {
   connection.query("SELECT * FROM products", function (err, res) {
     if (err) throw err;
-    console.log(res);
-    connection.end();
+    res.forEach(element => {
+      console.log("Item ID: " + element.item_id +
+        " | Product Name: " + element.product_name +
+        " | Price: $" + element.customer_price +
+        " | Quantity on hand: " + element.stock_quantity
+      );
+    });
+    console.log(lineBreak);
+    whatToDo();
   });
 }
+
+function loadArray() {
+  connection.query("SELECT * FROM products", function (err, res) {
+    if (err) throw err;
+    res.forEach(element => {
+      var newProduct = element.item_id + " | " + element.product_name + " | $" + element.customer_price;
+      productArr.push(newProduct);
+      });
+    });
+  }
+
+function enterOrder() {
+      connection.query("SELECT * FROM products", function (err, res) {
+        inquirer
+          .prompt([
+            {
+              type: "list",
+              name: "inventoryList",
+              message: "What would you like to order?",
+              choices: productArr,
+              pageSize: productArr.length
+            },
+            {
+              type: "text",
+              name: "quantity",
+              message: "How many would you like to order?",
+            }
+          ])
+          .then(function (product) {
+            var productID = product.inventoryList.split(" | ")[0];
+            var productName = product.inventoryList.split(" | ")[1];
+            var productQuantity = product.quantity;
+            if (productQuantity > res[productID - 1].stock_quantity) {
+              console.log("\nLooks like you want more " + productName + "s than what we have.\n");
+            } else {
+              console.log("\nYour order of " + productQuantity + " " + productName + "(s) has been placed!");
+              console.log("Order Total: $" + (productQuantity * res[productID - 1].customer_price) + "\n");
+              console.log("Thank you for getting shwifty with it!");
+              connection.query("UPDATE products SET ? WHERE?",
+                [
+                  {
+                    stock_quantity: (res[productID - 1].stock_quantity - productQuantity)
+                  },
+                  {
+                    item_id: productID
+                  }
+                ]
+              );
+            }
+            whatToDo();
+          });
+      });
+    }
+
+//function to end connection
+function endConnection() {
+      connection.end();
+    }
