@@ -34,3 +34,8 @@ On the customer side the user will be able to select from three options:
 ### Manager
 
 WIP
+
+### Video
+
+![alt text] (https://drive.google.com/file/d/1S0kGFY49YJ8qRK9RynU_f5MJsG0hTOxs/view)
+
