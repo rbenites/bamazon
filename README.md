@@ -32,3 +32,5 @@ On the customer side the user will be able to select from three options:
 * user will be able to quit out of the application.
 
 ### Manager
+
+WIP
