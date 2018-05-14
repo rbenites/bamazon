@@ -121,6 +121,7 @@ function enterOrder() {
             var productQuantity = product.quantity;
             if (productQuantity > res[productID - 1].stock_quantity) {
               console.log("\nLooks like you want more " + productName + "s than what we have.\n");
+              enterOrder();
             } else {
               console.log("\nYour order of " + productQuantity + " " + productName + "(s) has been placed!");
               console.log("Order Total: $" + (productQuantity * res[productID - 1].customer_price) + "\n");
@@ -135,8 +136,9 @@ function enterOrder() {
                   }
                 ]
               );
+              whatToDo();
             }
-            whatToDo();
+          
           });
       });
     }
